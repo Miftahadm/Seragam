@@ -146,7 +146,7 @@ body {
                 <div class="btn-group" style="margin-top: 20px">
                     <button class="btn btn-green" onclick="sendToWhatsApp()">
                         <i class="fas fa-paper-plane"></i>
-                        Kirim ke WhatsApp
+                        Order/Pesan
                     </button>
                     <button class="btn btn-red" onclick="clearCart()">Batal</button>
                 </div>
@@ -355,7 +355,7 @@ Total: Rp ${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).to
             `.trim();
 
             window.open(`https://wa.me/6281532920683?text=${encodeURIComponent(orderText)}`, '_blank');
-            showAlert('Pesanan dikirim ke WhatsApp');
+            showAlert('Pesanan diOrder/Pesan');
             clearCart();
         }
 

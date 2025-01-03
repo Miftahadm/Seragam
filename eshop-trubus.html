@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Shop Trubus v.1</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background: #fff;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .search-bar {
+            flex: 1;
+            margin: 0 2rem;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+        }
+
+        .cart-icon {
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 80px auto 20px;
+            padding: 1rem;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .cart-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1001;
+        }
+
+        .cart-content {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 400px;
+            height: 100%;
+            background: white;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1001;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 2rem;
+            border-radius: 8px;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+            z-index: 1002;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>E-Shop Trubus</h1>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Cari produk...">
+            </div>
+            <div class="icons">
+                <button class="btn" onclick="showAdminLogin()"><i class="fas fa-plus"></i></button>
+                <button class="btn" onclick="toggleCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
+
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-content">
+            <h2>Keranjang Belanja</h2>
+            <div id="cartItems"></div>
+            <div id="cartTotal"></div>
+            <button class="btn btn-primary" onclick="checkout()">Bayar</button>
+        </div>
+    </div>
+
+    <div class="modal" id="adminModal">
+        <div class="modal-content">
+            <h2>Login Admin</h2>
+            <input type="password" id="adminPassword" placeholder="Password">
+            <button class="btn btn-primary" onclick="loginAdmin()">Login</button>
+        </div>
+    </div>
+
+    <div class="modal" id="addProductModal">
+        <div class="modal-content">
+            <h2>Tambah Produk</h2>
+            <input type="text" id="productName" placeholder="Nama Produk">
+            <input type="number" id="productPrice" placeholder="Harga">
+            <input type="number" id="productStock" placeholder="Stok">
+            <input type="file" id="productImage" accept="image/*">
+            <button class="btn btn-primary" onclick="addProduct()">Simpan</button>
+        </div>
+    </div>
+
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <h2>Informasi Pembayaran</h2>
+            <p>Silahkan transfer ke rekening:</p>
+            <p>BSI 7177124359 a.n. Pondok Pesantren Trubus Iman</p>
+            <div id="orderDetails"></div>
+            <input type="file" id="paymentProof" accept="image/*">
+            <button class="btn btn-primary" onclick="uploadPaymentProof()">Upload Bukti Transfer</button>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        let products = [
+            {
+                id: 1,
+                name: "Produk 1",
+                price: 100000,
+                stock: 10,
+                image: "/api/placeholder/200/200"
+            },
+            // Add more products here
+        ];
+
+        let cart = [];
+        let cartTotal = 0;
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+            products.forEach(product => {
+                if (product.stock > 0) {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <img src="${product.image}" alt="${product.name}">
+                        <h3>${product.name}</h3>
+                        <p>Rp ${product.price.toLocaleString()}</p>
+                        <p>Stok: ${product.stock}</p>
+                        <button class="btn btn-primary" onclick="addToCart(${product.id})">Beli Sekarang</button>
+                        <button class="btn" onclick="toggleLove(${product.id})"><i class="fas fa-heart"></i></button>
+                    `;
+                    grid.appendChild(card);
+                }
+            });
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product && product.stock > 0) {
+                cart.push(product);
+                cartTotal += product.price;
+                document.querySelector('.cart-count').textContent = cart.length;
+                showNotification('Produk ditambahkan ke keranjang');
+                renderCart();
+            }
+        }
+
+        function renderCart() {
+            const cartItems = document.getElementById('cartItems');
+            const cartTotalEl = document.getElementById('cartTotal');
+            cartItems.innerHTML = '';
+            cart.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.innerHTML = `
+                    <p>${item.name} - Rp ${item.price.toLocaleString()}</p>
+                `;
+                cartItems.appendChild(itemEl);
+            });
+            cartTotalEl.innerHTML = `<h3>Total: Rp ${cartTotal.toLocaleString()}</h3>`;
+        }
+
+        function toggleCart() {
+            const cartModal = document.getElementById('cartModal');
+            cartModal.style.display = cartModal.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleLove(productId) {
+            showNotification('Terima kasih, Barakallah fiikum');
+        }
+
+        function showAdminLogin() {
+            document.getElementById('adminModal').style.display = 'block';
+        }
+
+        function loginAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === '123455') {
+                document.getElementById('adminModal').style.display = 'none';
+                document.getElementById('addProductModal').style.display = 'block';
+            } else {
+                alert('Password salah!');
+            }
+        }
+
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = parseInt(document.getElementById('productPrice').value);
+            const stock = parseInt(document.getElementById('productStock').value);
+            const imageFile = document.getElementById('productImage').files[0];
+
+            if (name && price && stock && imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const newProduct = {
+                        id: products.length + 1,
+                        name,
+                        price,
+                        stock,
+                        image: e.target.result
+                    };
+                    products.push(newProduct);
+                    renderProducts();
+                    document.getElementById('addProductModal').style.display = 'none';
+                };
+                reader.readAsDataURL(imageFile);
+            }
+        }
+
+        function checkout() {
+            if (cart.length === 0) return;
+            
+            const orderDetails = cart.map(item => `${item.name} - Rp ${item.price.toLocaleString()}`).join('\n');
+            document.getElementById('orderDetails').innerHTML = `
+                <h3>Detail Pesanan:</h3>
+                <p>${orderDetails}</p>
+                <h3>Total: Rp ${cartTotal.toLocaleString()}</h3>
+            `;
+            
+            document.getElementById('cartModal').style.display = 'none';
+            document.getElementById('paymentModal').style.display = 'block';
+        }
+
+        function uploadPaymentProof() {
+            const proofFile = document.getElementById('paymentProof').files[0];
+            if (!proofFile) return;
+
+            const orderDetails = cart.map(item => `${item.name} - Rp ${item.price.toLocaleString()}`).join('\n');
+            const message = `Assalamu'alaikum, saya telah melakukan pembayaran untuk pesanan dari E-Shop Trubus\n\n${orderDetails}\n\nTotal: Rp ${cartTotal.toLocaleString()}`;
+            
+            const whatsappUrl = `https://wa.me/6281532920683?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+
+            // Update stock
+            cart.forEach(item => {
+                const product = products.find(p => p.id === item.id);
+                if (product) product.stock--;
+            });
+
+            // Generate PDF
+            generatePDF();
+
+            // Clear cart and close modal
+            cart = [];
+            cartTotal = 0;
+            document.querySelector('.cart-count').textContent = '0';
+            document.getElementById('paymentModal').style.display = 'none';
+            showNotification('Pesanan terbayar');
+            renderProducts();
+        }
+
+        function generatePDF() {
+            const orderDetails = cart.map(item => `${item.name} - Rp ${item.price.toLocaleString()}`).join('\n');
+            const content = `
+                E-Shop Trubus - Bukti Pembelian
+                
+                Detail Pesanan:
+                ${orderDetails}
+                
+                Total: Rp ${cartTotal.toLocaleString()}
+                
+                Terima kasih telah berbelanja di E-Shop Trubus
+            `;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bukti-pembelian.txt';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredProducts = products.filter(product => 
+                product.name.toLowerCase().includes(searchTerm)
+            );
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+            filteredProducts.forEach(product => {
+                if (product.stock > 0) {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <img src="${product.image}" alt="${product.name}">
+                        <h3>${product.name}</h3>
+                        <p>Rp ${product.price.toLocaleString()}</p>
+                        <p>Stok: ${product.stock}</p>
+                        <button class="btn btn-primary" onclick="addToCart(${product.id})">Beli Sekarang</button>
+                        <button class="btn" onclick="toggleLove(${product.id})"><i class="fas fa-heart"></i></button>
+                    `;
+                    grid.appendChild(card);
+                }
+            });
+        });
+
+        // Initial render
+        renderProducts();
+    </script>
+</body>
+</html>
